@@ -1,0 +1,94 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: yorm-backend
+    container_name: yorm-node-backend
+    hostname: backend-container
+    depends_on:
+     - mongo
+    env_file: ./backend/.env
+    networks:
+      yorm-network:
+        ipv4_address: 172.16.100.50
+  mongo:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: yorm-mongo-database
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/db_password
+    hostname: database-container
+    secrets:
+      - db_password
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "udp://172.16.51.51:514"
+        syslog-format: "rfc3164"
+        tag: "database"
+    volumes:
+      - ./database/mongod.conf:/etc/mongod.conf
+    restart: always
+    networks:
+      yorm-network:
+        ipv4_address: 172.16.100.27
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: yorm-frontend
+    container_name: yorm-react-frontend
+    hostname: frontend-container
+    ports:
+      - 3000:3000
+    depends_on:
+      - backend
+    networks:
+      yorm-network:
+        ipv4_address: 172.16.100.30
+
+  syslog:
+    build:
+      context: ./syslog
+      dockerfile: Dockerfile
+    container_name: syslog
+    hostname: syslog-container
+    secrets:
+      - db_password
+    volumes:
+      - ./syslog/log:/var/log
+    cap_add:
+      - SYSLOG
+    networks:
+      syslog-network:
+        ipv4_address: 172.16.51.51
+
+networks:
+  yorm-network:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.16.100.0/24
+    driver_opts:
+      com.docker.network.bridge.name: br_yorm
+
+  syslog-network:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.16.51.0/24
+    driver_opts:
+      com.docker.network.bridge.name: br_syslog
+
+secrets:
+  db_password: 
+    file: ./secret/db_password.txt
+
+volumes:
+    web-root:
+      driver: local

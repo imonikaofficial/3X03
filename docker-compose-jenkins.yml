@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: jenkins
+    hostname: jenkins-container
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_jenkins_home:/var/jenkins_home
+      - jenkins_home:/home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      jenkins-network:
+        ipv4_address: 172.16.84.43
+
+networks:
+  jenkins-network:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.16.84.0/24
+    driver_opts:
+      com.docker.network.bridge.name: br_jenkins
+
+volumes:
+    jenkins_home:
+      driver: local
+    jenkins_jenkins_home:
+      driver: local
