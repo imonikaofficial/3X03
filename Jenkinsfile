@@ -1,39 +1,28 @@
 pipeline {
-  agent any
-  tools {
-    nodejs "node"
-  }
-  stages {
-    stage('Checkout SCM') {
-      steps {
-        checkout scmGit(branches: [
-          [name: '*/master']
-        ], extensions: [], userRemoteConfigs: [
-          [credentialsId: 'JenkinsGit', url: 'https://github.com/RonnieTJW99/ICT3x03']
-        ])
-      }
-    }
-    stage('Run Docker build') {
-      steps {
-        sh 'docker compose build'
-      }
+    agent any
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/imonikaofficial/3203.git'
+            }
+        }
+        
+        stage('Code Quality Check via SonarQube') {
+            steps {
+                script {
+                    def scannerHome = tool 'SonarQube'
+                    withSonarQubeEnv('SonarQube') {
+                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=3X03  -Dsonar.sources=. -Dsonar.host.url=http://172.26.51.22:9000/  -Dsonar.token=sqp_c2bf51886f3fddb925fa93f9e94a01b5d64e61b2"
+                    }
+                }
+            }
+        }
     }
 
-    stage('OWASP DependencyCheck') {
-      steps {
-        dir('frontend/') {
-          sh 'npm install --force'
+    post {
+        always {
+            recordIssues enabledForFailure: true, tool: sonarQube()
         }
-        dir('backend/') {
-          sh 'npm install --force'
-        }
-				dependencyCheck additionalArguments: '--format HTML --format XML', odcInstallation: 'OWASP Dependency-Check Vulnerabilities'
-      }
     }
-  }
-  post {
-      success {
-        dependencyCheckPublisher pattern: 'dependency-check-report.xml'
-      }
-    }
- }
+}
