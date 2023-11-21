@@ -1,0 +1,40 @@
+.form-container 
+{
+    text-align: center; 
+    height: 100%; 
+    padding: 20px;
+    box-sizing: border-box;
+}
+  
+.form-container form 
+{
+    margin: 0 auto;
+    max-width: 100%;
+}
+  
+.license-title
+{
+    border-top: 1px solid #ccc;
+    padding-top: 16px;
+    margin-bottom: 16px;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.terms
+{
+    border-top: 1px solid #ccc;
+    padding-top: 16px;
+    width: 100%;
+    float: left;
+}
+
+.files
+{
+    padding-bottom: 10px;
+}
+
+.files li
+{
+    padding: 5px;
+}
